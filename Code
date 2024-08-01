@@ -1,0 +1,1134 @@
+#!/bin/bash
+
+# Nome do repositório GitHub
+REPO_NAME="ResearchReflect"
+GITHUB_USERNAME="seu-usuario"
+GITHUB_EMAIL="seu-email@example.com"
+
+# Função para gerar hash SHA-256
+generate_hash() {
+    echo -n "$1" | sha256sum | awk '{print $1}'
+}
+
+# Criar estrutura de diretórios
+mkdir -p $REPO_NAME/{data_processing,network_analysis,text_mining,visualization,locale/{en,pt_BR}/LC_MESSAGES,tests,inpi}
+
+# Criar README.md
+cat <<EOL > $REPO_NAME/README.md
+# ResearchReflect
+
+ResearchReflect é uma ferramenta avançada para análise bibliométrica, proporcionando funcionalidades de visualização de redes, análise de texto, aprendizado de máquina e muito mais. Suporta múltiplos idiomas, incluindo português do Brasil e inglês.
+
+## Funcionalidades
+
+- Carregar dados de arquivos CSV
+- Importar dados do Scopus
+- Construir e visualizar redes de coautoria e citações
+- Mineração de textos, análise de sentimentos e detecção de tópicos
+- Visualizar mapas de densidade e superfície
+- Gráficos de barras, pizza, linha e mapas geográficos
+- Análises de aprendizado de máquina (Clustering, Classificação, Redução de Dimensionalidade)
+- Análises estatísticas (Índice H, Índice G, Distribuição de Citações)
+- Exportar e importar redes
+- Exportar relatórios em PDF
+
+## Instalação
+
+Clone o repositório e instale as dependências:
+
+\`\`\`bash
+git clone https://github.com/$GITHUB_USERNAME/$REPO_NAME.git
+cd $REPO_NAME
+pip install -r requirements.txt
+\`\`\`
+
+## Uso
+
+Execute a aplicação com:
+
+\`\`\`bash
+python main.py
+\`\`\`
+
+## Contribuição
+
+Contribuições são bem-vindas! Por favor, leia as [diretrizes de contribuição](CONTRIBUTING.md) para mais informações.
+
+## Licença
+
+Este projeto está licenciado sob a licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes.
+EOL
+
+# Criar LICENSE
+cat <<EOL > $REPO_NAME/LICENSE
+MIT License
+
+Copyright (c) 2024 [Seu Nome]
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+EOL
+
+# Criar CONTRIBUTING.md
+cat <<EOL > $REPO_NAME/CONTRIBUTING.md
+# Contribuição para ResearchReflect
+
+Obrigado por considerar contribuir para ResearchReflect! Este documento fornece diretrizes para contribuir com nosso projeto.
+
+## Como Contribuir
+
+1. Faça um fork do repositório
+2. Crie um branch para sua feature ou correção (\`git checkout -b minha-feature\`)
+3. Commit suas mudanças (\`git commit -am 'Adiciona minha feature'\`)
+4. Envie para o branch (\`git push origin minha-feature\`)
+5. Crie um novo Pull Request
+
+## Diretrizes para Contribuição
+
+- Certifique-se de que seu código segue nosso estilo de codificação.
+- Escreva testes para suas mudanças e verifique se todos os testes existentes passam.
+- Atualize a documentação conforme necessário.
+
+## Contato
+
+Se você tiver dúvidas, entre em contato pelo email [seu-email@example.com].
+EOL
+
+# Criar requirements.txt
+cat <<EOL > $REPO_NAME/requirements.txt
+pandas
+numpy
+scipy
+networkx
+matplotlib
+seaborn
+plotly
+scikit-learn
+community
+nltk
+spacy
+textblob
+fpdf
+requests
+EOL
+
+# Criar arquivos principais
+cat <<EOL > $REPO_NAME/setup.py
+from setuptools import setup, find_packages
+
+setup(
+    name="ResearchReflect",
+    version="1.0.0",
+    description="Advanced bibliometric analysis tool",
+    author="[Seu Nome]",
+    author_email="[seu-email@example.com]",
+    url="https://github.com/$GITHUB_USERNAME/$REPO_NAME",
+    packages=find_packages(),
+    install_requires=[
+        "pandas",
+        "numpy",
+        "scipy",
+        "networkx",
+        "matplotlib",
+        "seaborn",
+        "plotly",
+        "scikit-learn",
+        "community",
+        "nltk",
+        "spacy",
+        "textblob",
+        "fpdf",
+        "requests"
+    ],
+    entry_points={
+        "console_scripts": [
+            "researchreflect=main:main",
+        ]
+    },
+)
+EOL
+
+cat <<EOL > $REPO_NAME/main.py
+import tkinter as tk
+from tkinter import ttk, filedialog, simpledialog, messagebox, Menu
+from data_processing import DataProcessor
+from network_analysis import NetworkAnalyzer
+from text_mining import TextMiner
+from visualization import Visualizer
+import gettext
+import pandas as pd
+import subprocess
+
+# Configuração de internacionalização
+_ = gettext.gettext
+
+class ResearchReflectGUI:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("ResearchReflect")
+        self.processor = None
+        self.analyzer = None
+        self.visualizer = Visualizer()
+
+        self.create_widgets()
+        self.create_menu()
+
+    def create_widgets(self):
+        notebook = ttk.Notebook(self.root)
+        notebook.pack(pady=10, expand=True)
+
+        # Abas
+        self.data_tab = ttk.Frame(notebook)
+        self.workflow_tab = ttk.Frame(notebook)
+        self.network_tab = ttk.Frame(notebook)
+        self.text_analysis_tab = ttk.Frame(notebook)
+        self.maps_tab = ttk.Frame(notebook)
+        self.charts_tab = ttk.Frame(notebook)
+        self.ml_analysis_tab = ttk.Frame(notebook)
+        self.statistics_tab = ttk.Frame(notebook)
+        self.export_import_tab = ttk.Frame(notebook)
+        self.help_tab = ttk.Frame(notebook)
+
+        notebook.add(self.data_tab, text=_("Data"))
+        notebook.add(self.workflow_tab, text=_("Workflow"))
+        notebook.add(self.network_tab, text=_("Networks"))
+        notebook.add(self.text_analysis_tab, text=_("Text Analysis"))
+        notebook.add(self.maps_tab, text=_("Maps"))
+        notebook.add(self.charts_tab, text=_("Charts"))
+        notebook.add(self.ml_analysis_tab, text=_("Machine Learning"))
+        notebook.add(self.statistics_tab, text=_("Statistics"))
+        notebook.add(self.export_import_tab, text=_("Export/Import"))
+        notebook.add(self.help_tab, text=_("Help"))
+
+        # Abas de dados
+        self.create_button(self.data_tab, _("Load CSV"), self.load_csv)
+        self.create_button(self.data_tab, _("Import Scopus"), self.import_scopus)
+
+        # Aba de fluxo de trabalho
+        self.create_button(self.workflow_tab, _("Run Automatic Workflow"), self.run_auto_workflow)
+
+        # Aba de redes
+        self.create_button(self.network_tab, _("Co-authorship Network"), self.coauthorship_network)
+        self.create_button(self.network_tab, _("Citation Network"), self.citation_network)
+
+        # Aba de análise de texto
+        self.create_button(self.text_analysis_tab, _("Text Mining"), self.text_mining)
+        self.create_button(self.text_analysis_tab, _("Sentiment Analysis"), self.sentiment_analysis)
+        self.create_button(self.text_analysis_tab, _("Topic Detection"), self.topic_detection)
+
+        # Aba de mapas
+        self.create_button(self.maps_tab, _("Density Map"), self.density_map)
+        self.create_button(self.maps_tab, _("Surface Map"), self.surface_map)
+
+        # Aba de gráficos
+        self.create_button(self.charts_tab, _("Bar Chart"), self.bar_chart)
+        self.create_button(self.charts_tab, _("Pie Chart"), self.pie_chart)
+        self.create_button(self.charts_tab, _("Line Chart"), self.line_chart)
+        self.create_button(self.charts_tab, _("Geographical Map"), self.geo_map)
+
+        # Aba de aprendizado de máquina
+        self.create_button(self.ml_analysis_tab, _("Cluster Texts (K-Means)"), self.cluster_texts_kmeans)
+        self.create_button(self.ml_analysis_tab, _("Cluster Texts (DBSCAN)"), self.cluster_texts_dbscan)
+        self.create_button(self.ml_analysis_tab, _("Hierarchical Clustering"), self.hierarchical_clustering)
+        self.create_button(self.ml_analysis_tab, _("PCA Reduction"), self.pca_reduction)
+        self.create_button(self.ml_analysis_tab, _("t-SNE Reduction"), self.tsne_reduction)
+        self.create_button(self.ml_analysis_tab, _("Classify Documents"), self.classify_documents)
+
+        # Aba de estatísticas
+        self.create_button(self.statistics_tab, _("H-Index"), self.h_index)
+        self.create_button(self.statistics_tab, _("G-Index"), self.g_index)
+        self.create_button(self.statistics_tab, _("Citation Distribution"), self.citation_distribution)
+
+        # Aba de exportação e importação
+        self.create_button(self.export_import_tab, _("Export Network"), self.export_network)
+        self.create_button(self.export_import_tab, _("Import Network"), self.import_network)
+        self.create_button(self.export_import_tab, _("Export Report"), self.export_report)
+
+        # Aba de ajuda
+        help_text = tk.Text(self.help_tab, wrap='word', height=20, width=100)
+        help_text.insert(tk.END, self.get_help_text())
+        help_text.config(state=tk.DISABLED)
+        help_text.pack()
+
+    def create_menu(self):
+        menubar = Menu(self.root)
+        self.root.config(menu=menubar)
+
+        help_menu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label=_("Help"), menu=help_menu)
+        help_menu.add_command(label=_("How to Use"), command=self.show_help)
+        help_menu.add_command(label=_("About"), command=self.show_about)
+
+        update_menu = Menu(menubar, tearoff=0)
+        menubar.add_cascade(label=_("Update"), menu=update_menu)
+        update_menu.add_command(label=_("Check for Updates"), command=self.check_for_updates)
+
+    def create_button(self, frame, text, command):
+        btn = ttk.Button(frame, text=text, command=command)
+        btn.pack(side=tk.LEFT, padx=5)
+
+    def show_help(self):
+        messagebox.showinfo(_("How to Use"), self.get_help_text())
+
+    def get_help_text(self):
+        return """
+        ResearchReflect - Help
+
+        This tool provides functionalities for bibliometric analysis, including:
+        
+        - Load CSV: Load data from a CSV file.
+        - Import Scopus: Import data from Scopus using an API key.
+        - Run Automatic Workflow: Perform a complete bibliometric analysis automatically.
+        - Co-authorship Network: Visualize the co-authorship network.
+        - Citation Network: Visualize the citation network.
+        - Text Mining: Perform text mining on abstracts or other text data.
+        - Sentiment Analysis: Analyze the sentiment of text data.
+        - Topic Detection: Detect topics in text data using LDA.
+        - Density Map: Visualize a density map of the co-authorship network.
+        - Surface Map: Visualize a surface map of text data.
+        - Bar Chart: Create a bar chart of publications by year.
+        - Pie Chart: Create a pie chart of publications by author.
+        - Line Chart: Create a line chart of publication trends.
+        - Geographical Map: Visualize geographical co-authorship.
+        - Cluster Texts (K-Means): Cluster text data using K-Means.
+        - Cluster Texts (DBSCAN): Cluster text data using DBSCAN.
+        - Hierarchical Clustering: Perform hierarchical clustering on text data.
+        - PCA Reduction: Reduce dimensionality of text data using PCA.
+        - t-SNE Reduction: Reduce dimensionality of text data using t-SNE.
+        - Classify Documents: Classify documents using machine learning.
+        - H-Index: Calculate the H-Index of citations.
+        - G-Index: Calculate the G-Index of citations.
+        - Citation Distribution: Analyze the distribution of citations.
+        - Export Network: Export the co-authorship or citation network to a JSON file.
+        - Import Network: Import a network from a JSON file.
+        - Export Report: Export a report of the analysis to a PDF file.
+
+        For more details, refer to the user manual or contact support.
+        """
+
+    def show_about(self):
+        about_text = """
+        ResearchReflect - Version 1.0
+
+        Developed by [Seu Nome]
+        Contact: [seu-email@example.com]
+        
+        This tool is designed for advanced bibliometric analysis.
+        """
+        messagebox.showinfo(_("About"), about_text)
+
+    def check_for_updates(self):
+        subprocess.run(["python", "update_tool.py"])
+
+    def load_csv(self):
+        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+        if file_path:
+            self.processor = DataProcessor(file_path)
+            self.processor.clean_data()
+            messagebox.showinfo(_("Info"), _("Data loaded successfully!"))
+
+    def import_scopus(self):
+        query = simpledialog.askstring(_("Input"), _("Enter Scopus query:"))
+        api_key = simpledialog.askstring(_("Input"), _("Enter your Scopus API key:"))
+        if query and api_key:
+            self.processor = DataProcessor()
+            self.processor.import_data_from_scopus(query, api_key)
+            messagebox.showinfo(_("Info"), _("Scopus data imported successfully!"))
+
+    def run_auto_workflow(self):
+        file_path = filedialog.askopenfilename(filetypes=[("CSV files", "*.csv")])
+        if file_path:
+            self.processor = DataProcessor(file_path)
+            self.processor.clean_data()
+            
+            progress = self.show_progress(_("Running Automatic Workflow..."))
+
+            # Construir e visualizar redes
+            self.analyzer = NetworkAnalyzer(self.processor.get_data())
+            G_coauthorship = self.analyzer.build_coauthorship_network()
+            G_citation = self.analyzer.build_citation_network()
+            self.visualizer.visualize_network(G_coauthorship, title=_("Co-authorship Network"))
+            self.visualizer.visualize_network(G_citation, title=_("Citation Network"))
+
+            # Mineração de textos, análise de sentimentos e detecção de tópicos
+            miner = TextMiner(self.processor.get_data())
+            X, vectorizer = miner.text_mining()
+            sentiments = miner.analyze_sentiment()
+            lda = miner.detect_topics(X)
+            topic_labels = lda.transform(X).argmax(axis=1)
+            self.visualizer.overlay_visualization(G_coauthorship, sentiments, title=_("Sentiment Analysis"), cmap='RdYlGn')
+            self.visualizer.overlay_visualization(G_coauthorship, topic_labels, title=_("Topic Detection"), cmap='tab20')
+
+            # Análises estatísticas
+            citations = self.processor.get_data()['references'].str.split(';').map(len).tolist()
+            self.visualizer.plot_h_index(citations, title=_("H-Index"))
+            self.visualizer.plot_g_index(citations, title=_("G-Index"))
+            citation_counts = self.processor.get_data()['references'].str.split(';').map(len)
+            self.visualizer.plot_citation_distribution(citation_counts, title=_("Citation Distribution"))
+
+            # Visualizações de dados
+            self.visualizer.bar_chart(self.processor.get_data(), x='year', y='title', title=_("Publications by Year"))
+            self.visualizer.pie_chart(self.processor.get_data(), names='authors', values='title', title=_("Publications by Author"))
+            self.visualizer.line_chart(self.processor.get_data(), x='year', y='title', title=_("Publication Trends"))
+            self.visualizer.geo_map(self.processor.get_data(), locations='country', color='title', title=_("Geographical Co-authorship"))
+            reduced_X = miner.pca_reduction(X)
+            self.visualizer.pca_visualization(reduced_X, title=_("PCA Reduction"))
+            reduced_X_tsne = miner.tsne_reduction(X)
+            self.visualizer.tsne_visualization(reduced_X_tsne, title=_("t-SNE Reduction"))
+
+            # Exportar relatório final
+            content = ["This is a report generated by ResearchReflect."]
+            file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
+            if file_path:
+                self.visualizer.export_report(file_path, content)
+            
+            progress.destroy()
+            messagebox.showinfo(_("Info"), _("Automatic workflow completed successfully!"))
+        else:
+            messagebox.showwarning(_("Warning"), _("Please select a CSV file!"))
+
+    def coauthorship_network(self):
+        self.create_network_visualization(self.processor, self.analyzer.build_coauthorship_network, _("Co-authorship Network"))
+
+    def citation_network(self):
+        self.create_network_visualization(self.processor, self.analyzer.build_citation_network, _("Citation Network"))
+
+    def text_mining(self):
+        if self.processor:
+            miner = TextMiner(self.processor.get_data())
+            X, vectorizer = miner.text_mining()
+            self.visualizer.pca_visualization(X)
+        else:
+            messagebox.showwarning(_("Warning"), _("Please load data first!"))
+
+    def sentiment_analysis(self):
+        self.perform_text_analysis(self.processor, self.analyzer, TextMiner.analyze_sentiment, _("Sentiment Analysis"), 'RdYlGn')
+
+    def topic_detection(self):
+        self.perform_text_analysis(self.processor, self.analyzer, TextMiner.detect_topics, _("Topic Detection"), 'tab20')
+
+    def density_map(self):
+        self.create_map_visualization(self.analyzer, self.analyzer.build_coauthorship_network, _("Density Map"))
+
+    def surface_map(self):
+        self.create_map_visualization(self.processor, TextMiner.text_mining, _("Surface Map"))
+
+    def bar_chart(self):
+        self.create_chart_visualization(self.processor, 'year', 'title', _("Publications by Year"))
+
+    def pie_chart(self):
+        self.create_chart_visualization(self.processor, 'authors', 'title', _("Publications by Author"))
+
+    def line_chart(self):
+        self.create_chart_visualization(self.processor, 'year', 'title', _("Publication Trends"))
+
+    def geo_map(self):
+        self.create_geo_visualization(self.processor, 'country', 'title', _("Geographical Co-authorship"))
+
+    def cluster_texts_kmeans(self):
+        self.perform_text_analysis(self.processor, self.analyzer, TextMiner.cluster_texts, _("Cluster Texts (K-Means)"))
+
+    def cluster_texts_dbscan(self):
+        self.perform_text_analysis(self.processor, self.analyzer, TextMiner.cluster_texts_dbscan, _("Cluster Texts (DBSCAN)"))
+
+    def hierarchical_clustering(self):
+        self.perform_text_analysis(self.processor, self.analyzer, TextMiner.hierarchical_clustering, _("Hierarchical Clustering"))
+
+    def pca_reduction(self):
+        self.perform_text_analysis(self.processor, self.analyzer, TextMiner.pca_reduction, _("PCA Reduction"))
+
+    def tsne_reduction(self):
+        self.perform_text_analysis(self.processor, self.analyzer, TextMiner.tsne_reduction, _("t-SNE Reduction"))
+
+    def classify_documents(self):
+        self.perform_text_analysis(self.processor, self.analyzer, TextMiner.classify_documents, _("Classify Documents"))
+
+    def h_index(self):
+        self.create_stat_visualization(self.processor, TextMiner.calculate_h_index, _("H-Index"))
+
+    def g_index(self):
+        self.create_stat_visualization(self.processor, TextMiner.calculate_g_index, _("G-Index"))
+
+    def citation_distribution(self):
+        self.create_stat_visualization(self.processor, TextMiner.plot_citation_distribution, _("Citation Distribution"))
+
+    def export_network(self):
+        self.export_data(self.analyzer, self.analyzer.build_coauthorship_network, _("Export Network"))
+
+    def import_network(self):
+        self.import_data(self.visualizer, _("Imported Network"))
+
+    def export_report(self):
+        content = ["This is a report generated by ResearchReflect."]
+        file_path = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
+        if file_path:
+            self.visualizer.export_report(file_path, content)
+
+    def create_network_visualization(self, processor, network_func, title):
+        if processor:
+            self.analyzer = NetworkAnalyzer(processor.get_data())
+            G = network_func()
+            self.visualizer.visualize_network(G, title=title)
+        else:
+            messagebox.showwarning(_("Warning"), _("Please load data first!"))
+
+    def perform_text_analysis(self, processor, analyzer, analysis_func, title, cmap=None):
+        if processor:
+            miner = TextMiner(processor.get_data())
+            X, vectorizer = miner.text_mining()
+            results = analysis_func(miner, X)
+            if cmap:
+                self.visualizer.overlay_visualization(analyzer.build_coauthorship_network(), results, title=title, cmap=cmap)
+            else:
+                self.visualizer.overlay_visualization(analyzer.build_coauthorship_network(), results, title=title)
+        else:
+            messagebox.showwarning(_("Warning"), _("Please load data first!"))
+
+    def create_map_visualization(self, analyzer, network_func, title):
+        if analyzer:
+            G = network_func()
+            self.visualizer.density_map(G, title=title)
+        else:
+            messagebox.showwarning(_("Warning"), _("Please create a network first!"))
+
+    def create_chart_visualization(self, processor, x, y, title):
+        if processor:
+            data = processor.get_data()
+            self.visualizer.bar_chart(data, x=x, y=y, title=title)
+        else:
+            messagebox.showwarning(_("Warning"), _("Please load data first!"))
+
+    def create_geo_visualization(self, processor, locations, color, title):
+        if processor:
+            data = processor.get_data()
+            self.visualizer.geo_map(data, locations=locations, color=color, title=title)
+        else:
+            messagebox.showwarning(_("Warning"), _("Please load data first!"))
+
+    def create_stat_visualization(self, processor, stat_func, title):
+        if processor:
+            data = processor.get_data()
+            citations = data['references'].str.split(';').map(len).tolist()
+            stat_func(citations, title=title)
+        else:
+            messagebox.showwarning(_("Warning"), _("Please load data first!"))
+
+    def export_data(self, analyzer, network_func, title):
+        if analyzer:
+            file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON files", "*.json")])
+            if file_path:
+                self.visualizer.export_network(network_func(), file_path)
+                messagebox.showinfo(_("Info"), _("Network exported successfully!"))
+        else:
+            messagebox.showwarning(_("Warning"), _("Please create a network first!"))
+
+    def import_data(self, visualizer, title):
+        file_path = filedialog.askopenfilename(filetypes=[("JSON files", "*.json")])
+        if file_path:
+            G = visualizer.import_network(file_path)
+            visualizer.visualize_network(G, title=title)
+
+    def show_progress(self, message):
+        progress = tk.Toplevel(self.root)
+        progress.title(_("Progress"))
+        tk.Label(progress, text=message).pack(pady=10)
+        progress.geometry("300x100")
+        self.root.update_idletasks()
+        return progress
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ResearchReflectGUI(root)
+    root.mainloop()
+EOL
+
+# Criar módulos de exemplo
+cat <<EOL > $REPO_NAME/data_processing.py
+import pandas as pd
+
+class DataProcessor:
+    def __init__(self, file_path=None):
+        if file_path:
+            self.data = pd.read_csv(file_path)
+        else:
+            self.data = pd.DataFrame()
+
+    def clean_data(self):
+        # Implementar lógica de limpeza de dados aqui
+        pass
+
+    def import_data_from_scopus(self, query, api_key):
+        # Implementar lógica de importação da API Scopus aqui
+        pass
+
+    def get_data(self):
+        return self.data
+EOL
+
+cat <<EOL > $REPO_NAME/network_analysis.py
+import networkx as nx
+
+class NetworkAnalyzer:
+    def __init__(self, data):
+        self.data = data
+
+    def build_coauthorship_network(self):
+        G = nx.Graph()
+        # Implementar lógica da rede de coautoria aqui
+        return G
+
+    def build_citation_network(self):
+        G = nx.DiGraph()
+        # Implementar lógica da rede de citações aqui
+        return G
+EOL
+
+cat <<EOL > $REPO_NAME/text_mining.py
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
+from textblob import TextBlob
+
+class TextMiner:
+    def __init__(self, data):
+        self.data = data
+
+    def text_mining(self):
+        vectorizer = CountVectorizer()
+        X = vectorizer.fit_transform(self.data['abstract'])
+        return X, vectorizer
+
+    def analyze_sentiment(self):
+        sentiments = self.data['abstract'].apply(lambda x: TextBlob(x).sentiment.polarity)
+        return sentiments
+
+    def detect_topics(self, X):
+        lda = LatentDirichletAllocation(n_components=10)
+        lda.fit(X)
+        return lda
+
+    def pca_reduction(self, X):
+        # Implementar lógica de redução PCA aqui
+        pass
+
+    def tsne_reduction(self, X):
+        # Implementar lógica de redução t-SNE aqui
+        pass
+
+    def classify_documents(self, X):
+        # Implementar lógica de classificação de documentos aqui
+        pass
+EOL
+
+cat <<EOL > $REPO_NAME/visualization.py
+import matplotlib.pyplot as plt
+import networkx as nx
+import seaborn as sns
+import plotly.express as px
+from fpdf import FPDF
+
+class Visualizer:
+    def visualize_network(self, G, title="Network"):
+        pos = nx.spring_layout(G)
+        plt.figure(figsize=(10, 10))
+        nx.draw(G, pos, with_labels=True, node_size=50, font_size=8)
+        plt.title(title)
+        plt.show()
+
+    def overlay_visualization(self, G, data, title="Overlay", cmap='viridis'):
+        pos = nx.spring_layout(G)
+        plt.figure(figsize=(10, 10))
+        nodes = nx.draw_networkx_nodes(G, pos, node_size=50, cmap=plt.get_cmap(cmap), node_color=data)
+        edges = nx.draw_networkx_edges(G, pos)
+        labels = nx.draw_networkx_labels(G, pos, font_size=8)
+        plt.colorbar(nodes)
+        plt.title(title)
+        plt.show()
+
+    def bar_chart(self, data, x, y, title="Bar Chart"):
+        plt.figure(figsize=(10, 6))
+        sns.barplot(x=x, y=y, data=data)
+        plt.title(title)
+        plt.show()
+
+    def pie_chart(self, data, names, values, title="Pie Chart"):
+        fig = px.pie(data, names=names, values=values, title=title)
+        fig.show()
+
+    def line_chart(self, data, x, y, title="Line Chart"):
+        plt.figure(figsize=(10, 6))
+        sns.lineplot(x=x, y=y, data=data)
+        plt.title(title)
+        plt.show()
+
+    def geo_map(self, data, locations, color, title="Geographical Map"):
+        fig = px.choropleth(data, locations=locations, color=color, title=title)
+        fig.show()
+
+    def pca_visualization(self, X, title="PCA Reduction"):
+        plt.figure(figsize=(10, 6))
+        plt.scatter(X[:, 0], X[:, 1], c=X[:, 1], cmap='viridis', s=50)
+        plt.colorbar()
+        plt.title(title)
+        plt.show()
+
+    def tsne_visualization(self, X, title="t-SNE Reduction"):
+        plt.figure(figsize=(10, 6))
+        plt.scatter(X[:, 0], X[:, 1], c=X[:, 1], cmap='viridis', s=50)
+        plt.colorbar()
+        plt.title(title)
+        plt.show()
+
+    def plot_h_index(self, citations, title="H-Index"):
+        # Implementar lógica de plotagem do índice H aqui
+        pass
+
+    def plot_g_index(self, citations, title="G-Index"):
+        # Implementar lógica de plotagem do índice G aqui
+        pass
+
+    def plot_citation_distribution(self, citation_counts, title="Citation Distribution"):
+        plt.figure(figsize=(10, 6))
+        sns.histplot(citation_counts, bins=20)
+        plt.title(title)
+        plt.show()
+
+    def export_network(self, G, file_path):
+        nx.write_gml(G, file_path)
+
+    def import_network(self, file_path):
+        G = nx.read_gml(file_path)
+        return G
+
+    def export_report(self, file_path, content):
+        pdf = FPDF()
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+        for line in content:
+            pdf.cell(200, 10, txt=line, ln=True, align='C')
+        pdf.output(file_path)
+EOL
+
+# Criar arquivos de tradução
+cat <<EOL > $REPO_NAME/locale/en/LC_MESSAGES/researchreflect.po
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: en\n"
+
+msgid "Data"
+msgstr "Data"
+
+msgid "Workflow"
+msgstr "Workflow"
+
+msgid "Networks"
+msgstr "Networks"
+
+msgid "Text Analysis"
+msgstr "Text Analysis"
+
+msgid "Maps"
+msgstr "Maps"
+
+msgid "Charts"
+msgstr "Charts"
+
+msgid "Machine Learning"
+msgstr "Machine Learning"
+
+msgid "Statistics"
+msgstr "Statistics"
+
+msgid "Export/Import"
+msgstr "Export/Import"
+
+msgid "Help"
+msgstr "Help"
+
+msgid "Load CSV"
+msgstr "Load CSV"
+
+msgid "Import Scopus"
+msgstr "Import Scopus"
+
+msgid "Run Automatic Workflow"
+msgstr "Run Automatic Workflow"
+
+msgid "Co-authorship Network"
+msgstr "Co-authorship Network"
+
+msgid "Citation Network"
+msgstr "Citation Network"
+
+msgid "Text Mining"
+msgstr "Text Mining"
+
+msgid "Sentiment Analysis"
+msgstr "Sentiment Analysis"
+
+msgid "Topic Detection"
+msgstr "Topic Detection"
+
+msgid "Density Map"
+msgstr "Density Map"
+
+msgid "Surface Map"
+msgstr "Surface Map"
+
+msgid "Bar Chart"
+msgstr "Bar Chart"
+
+msgid "Pie Chart"
+msgstr "Pie Chart"
+
+msgid "Line Chart"
+msgstr "Line Chart"
+
+msgid "Geographical Map"
+msgstr "Geographical Map"
+
+msgid "Cluster Texts (K-Means)"
+msgstr "Cluster Texts (K-Means)"
+
+msgid "Cluster Texts (DBSCAN)"
+msgstr "Cluster Texts (DBSCAN)"
+
+msgid "Hierarchical Clustering"
+msgstr "Hierarchical Clustering"
+
+msgid "PCA Reduction"
+msgstr "PCA Reduction"
+
+msgid "t-SNE Reduction"
+msgstr "t-SNE Reduction"
+
+msgid "Classify Documents"
+msgstr "Classify Documents"
+
+msgid "H-Index"
+msgstr "H-Index"
+
+msgid "G-Index"
+msgstr "G-Index"
+
+msgid "Citation Distribution"
+msgstr "Citation Distribution"
+
+msgid "Export Network"
+msgstr "Export Network"
+
+msgid "Import Network"
+msgstr "Import Network"
+
+msgid "Export Report"
+msgstr "Export Report"
+
+msgid "How to Use"
+msgstr "How to Use"
+
+msgid "About"
+msgstr "About"
+
+msgid "Check for Updates"
+msgstr "Check for Updates"
+
+msgid "Running Automatic Workflow..."
+msgstr "Running Automatic Workflow..."
+
+msgid "Warning"
+msgstr "Warning"
+
+msgid "Please select a CSV file!"
+msgstr "Please select a CSV file!"
+
+msgid "Info"
+msgstr "Info"
+
+msgid "Data loaded successfully!"
+msgstr "Data loaded successfully!"
+
+msgid "Scopus data imported successfully!"
+msgstr "Scopus data imported successfully!"
+
+msgid "Automatic workflow completed successfully!"
+msgstr "Automatic workflow completed successfully!"
+
+msgid "Please load data first!"
+msgstr "Please load data first!"
+
+msgid "Network exported successfully!"
+msgstr "Network exported successfully!"
+
+msgid "Please create a network first!"
+msgstr "Please create a network first!"
+
+msgid "This is a report generated by ResearchReflect."
+msgstr "This is a report generated by ResearchReflect."
+EOL
+
+cat <<EOL > $REPO_NAME/locale/pt_BR/LC_MESSAGES/researchreflect.po
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: pt_BR\n"
+
+msgid "Data"
+msgstr "Dados"
+
+msgid "Workflow"
+msgstr "Fluxo de Trabalho"
+
+msgid "Networks"
+msgstr "Redes"
+
+msgid "Text Analysis"
+msgstr "Análise de Texto"
+
+msgid "Maps"
+msgstr "Mapas"
+
+msgid "Charts"
+msgstr "Gráficos"
+
+msgid "Machine Learning"
+msgstr "Aprendizado de Máquina"
+
+msgid "Statistics"
+msgstr "Estatísticas"
+
+msgid "Export/Import"
+msgstr "Exportar/Importar"
+
+msgid "Help"
+msgstr "Ajuda"
+
+msgid "Load CSV"
+msgstr "Carregar CSV"
+
+msgid "Import Scopus"
+msgstr "Importar Scopus"
+
+msgid "Run Automatic Workflow"
+msgstr "Executar Fluxo de Trabalho Automático"
+
+msgid "Co-authorship Network"
+msgstr "Rede de Coautoria"
+
+msgid "Citation Network"
+msgstr "Rede de Citações"
+
+msgid "Text Mining"
+msgstr "Mineração de Texto"
+
+msgid "Sentiment Analysis"
+msgstr "Análise de Sentimentos"
+
+msgid "Topic Detection"
+msgstr "Detecção de Tópicos"
+
+msgid "Density Map"
+msgstr "Mapa de Densidade"
+
+msgid "Surface Map"
+msgstr "Mapa de Superfície"
+
+msgid "Bar Chart"
+msgstr "Gráfico de Barras"
+
+msgid "Pie Chart"
+msgstr "Gráfico de Pizza"
+
+msgid "Line Chart"
+msgstr "Gráfico de Linha"
+
+msgid "Geographical Map"
+msgstr "Mapa Geográfico"
+
+msgid "Cluster Texts (K-Means)"
+msgstr "Agrupar Textos (K-Means)"
+
+msgid "Cluster Texts (DBSCAN)"
+msgstr "Agrupar Textos (DBSCAN)"
+
+msgid "Hierarchical Clustering"
+msgstr "Agrupamento Hierárquico"
+
+msgid "PCA Reduction"
+msgstr "Redução PCA"
+
+msgid "t-SNE Reduction"
+msgstr "Redução t-SNE"
+
+msgid "Classify Documents"
+msgstr "Classificar Documentos"
+
+msgid "H-Index"
+msgstr "Índice H"
+
+msgid "G-Index"
+msgstr "Índice G"
+
+msgid "Citation Distribution"
+msgstr "Distribuição de Citações"
+
+msgid "Export Network"
+msgstr "Exportar Rede"
+
+msgid "Import Network"
+msgstr "Importar Rede"
+
+msgid "Export Report"
+msgstr "Exportar Relatório"
+
+msgid "How to Use"
+msgstr "Como Usar"
+
+msgid "About"
+msgstr "Sobre"
+
+msgid "Check for Updates"
+msgstr "Verificar Atualizações"
+
+msgid "Running Automatic Workflow..."
+msgstr "Executando Fluxo de Trabalho Automático..."
+
+msgid "Warning"
+msgstr "Aviso"
+
+msgid "Please select a CSV file!"
+msgstr "Por favor, selecione um arquivo CSV!"
+
+msgid "Info"
+msgstr "Informação"
+
+msgid "Data loaded successfully!"
+msgstr "Dados carregados com sucesso!"
+
+msgid "Scopus data imported successfully!"
+msgstr "Dados do Scopus importados com sucesso!"
+
+msgid "Automatic workflow completed successfully!"
+msgstr "Fluxo de trabalho automático concluído com sucesso!"
+
+msgid "Please load data first!"
+msgstr "Por favor, carregue os dados primeiro!"
+
+msgid "Network exported successfully!"
+msgstr "Rede exportada com sucesso!"
+
+msgid "Please create a network first!"
+msgstr "Por favor, crie uma rede primeiro!"
+
+msgid "This is a report generated by ResearchReflect."
+msgstr "Este é um relatório gerado pelo ResearchReflect."
+EOL
+
+# Criar testes de unidade de exemplo
+cat <<EOL > $REPO_NAME/tests/test_data_processing.py
+import unittest
+from data_processing import DataProcessor
+
+class TestDataProcessor(unittest.TestCase):
+    def test_clean_data(self):
+        processor = DataProcessor()
+        processor.clean_data()
+        # Adicione asserções aqui para verificar a limpeza dos dados
+
+    def test_import_data_from_scopus(self):
+        processor = DataProcessor()
+        processor.import_data_from_scopus("query", "api_key")
+        # Adicione asserções aqui para verificar a importação dos dados do Scopus
+
+if __name__ == '__main__':
+    unittest.main()
+EOL
+
+# Criar arquivos para submissão ao INPI
+cat <<EOL > $REPO_NAME/inpi/descricao_completa_software.txt
+ResearchReflect - Descrição Completa do Software
+
+ResearchReflect é uma ferramenta avançada para análise bibliométrica. Suas funcionalidades incluem:
+
+- Carregar dados de arquivos CSV.
+- Importar dados do Scopus.
+- Construir e visualizar redes de coautoria e citações.
+- Mineração de textos, análise de sentimentos e detecção de tópicos.
+- Visualizar mapas de densidade e superfície.
+- Gráficos de barras, pizza, linha e mapas geográficos.
+- Análises de aprendizado de máquina (Clustering, Classificação, Redução de Dimensionalidade).
+- Análises estatísticas (Índice H, Índice G, Distribuição de Citações).
+- Exportar e importar redes.
+- Exportar relatórios em PDF.
+
+Desenvolvido por [Seu Nome].
+Contato: [seu-email@example.com].
+EOL
+
+# Código-fonte dividido em partes e transformado em hashes
+partes_codigo=(
+    "import tkinter as tk\nfrom tkinter import ttk, filedialog, simpledialog, messagebox, Menu\nfrom data_processing import DataProcessor\nfrom network_analysis import NetworkAnalyzer\nfrom text_mining import TextMiner\nfrom visualization import Visualizer\nimport gettext\nimport pandas as pd\nimport subprocess"
+    "class ResearchReflectGUI:\n    def __init__(self, root):\n        self.root = root\n        self.root.title(\"ResearchReflect\")\n        self.processor = None\n        self.analyzer = None\n        self.visualizer = Visualizer()\n\n        self.create_widgets()\n        self.create_menu()"
+    "def main():\n    root = tk.Tk()\n    app = ResearchReflectGUI(root)\n    root.mainloop()\n\nif __name__ == \"__main__\":\n    main()"
+)
+
+hashes_codigo=()
+for parte in "${partes_codigo[@]}"; do
+    hashes_codigo+=("$(generate_hash "$parte")")
+done
+
+# Criar arquivo de código-fonte com hashes
+cat <<EOL > $REPO_NAME/inpi/codigo_fonte_completo.txt
+# ResearchReflect - Código-Fonte Completo com Hashes
+
+# Importações
+# Hash: ${hashes_codigo[0]}
+
+# Classe ResearchReflectGUI
+# Hash: ${hashes_codigo[1]}
+
+# Função Main
+# Hash: ${hashes_codigo[2]}
+EOL
+
+cat <<EOL > $REPO_NAME/inpi/manual_usuario.txt
+# Incluindo o conteúdo do README.md
+ResearchReflect - Manual do Usuário
+
+ResearchReflect é uma ferramenta avançada para análise bibliométrica, proporcionando funcionalidades de visualização de redes, análise de texto, aprendizado de máquina e muito mais. Suporta múltiplos idiomas, incluindo português do Brasil e inglês.
+
+## Funcionalidades
+
+- Carregar dados de arquivos CSV.
+- Importar dados do Scopus.
+- Construir e visualizar redes de coautoria e citações.
+- Mineração de textos, análise de sentimentos e detecção de tópicos.
+- Visualizar mapas de densidade e superfície.
+- Gráficos de barras, pizza, linha e mapas geográficos.
+- Análises de aprendizado de máquina (Clustering, Classificação, Redução de Dimensionalidade).
+- Análises estatísticas (Índice H, Índice G, Distribuição de Citações).
+- Exportar e importar redes.
+- Exportar relatórios em PDF.
+
+## Instalação
+
+Clone o repositório e instale as dependências:
+
+```bash
+git clone https://github.com/[seu-usuario]/ResearchReflect.git
+cd ResearchReflect
+pip install -r requirements.txt
